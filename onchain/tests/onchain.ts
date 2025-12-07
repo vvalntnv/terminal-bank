@@ -4,7 +4,7 @@ import { Onchain } from "../target/types/onchain";
 import { createMint, getAssociatedTokenAddress } from "@solana/spl-token";
 import { expect } from "chai";
 
-describe("onchain", () => {
+describe("Initialize User Subaccount", () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);

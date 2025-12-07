@@ -1,7 +1,7 @@
+mod constants;
 mod errors;
 mod instructions;
 mod state;
-mod constants;
 
 use anchor_lang::prelude::*;
 use instructions::*;
@@ -18,5 +18,9 @@ pub mod onchain {
         account_name: String,
     ) -> Result<()> {
         instructions::_initialize_user_subaccount(ctx, index, account_name)
+    }
+
+    pub fn deposit(ctx: Context<Deposit>, index: u8, amount: u64) -> Result<()> {
+        instructions::_deposit(ctx, index, amount)
     }
 }
