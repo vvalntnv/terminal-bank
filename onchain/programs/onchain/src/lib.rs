@@ -27,4 +27,13 @@ pub mod onchain {
     pub fn withdraw(ctx: Context<Withdraw>, index: u8, amount: u64) -> Result<()> {
         instructions::_withdraw(ctx, index, amount)
     }
+
+    pub fn internal_transfer(
+        ctx: Context<InternalTransfer>,
+        sender_index: u8,
+        receiver_index: u8,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::internal_transfer(ctx, sender_index, receiver_index, amount)
+    }
 }

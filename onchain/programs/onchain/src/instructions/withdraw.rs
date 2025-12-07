@@ -1,5 +1,5 @@
 use crate::constants::USER_ACCOUNT_SEED;
-use crate::errors::WithdrawTokensError;
+use crate::errors::BankingError;
 use crate::state::UserAccount;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{burn, Burn, Token};
@@ -15,7 +15,7 @@ pub fn _withdraw(ctx: Context<Withdraw>, index: u8, amount: u64) -> Result<()> {
     let user_pda = &ctx.accounts.user_account_pda;
 
     if amount > user_ata.amount {
-        return err!(WithdrawTokensError::InsufficientFunds);
+        return err!(BankingError::InsufficientFunds);
     }
 
     let user_pda_bump = ctx.bumps.user_account_pda;

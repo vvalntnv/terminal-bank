@@ -7,7 +7,9 @@ pub enum InitializeAccountError {
 }
 
 #[error_code]
-pub enum WithdrawTokensError {
+pub enum BankingError {
     #[msg("Insufficient funds for the amount requested")]
     InsufficientFunds,
+    #[msg("Cannot transfer tokens between two accounts with the same id. That is basically the same account")]
+    CannotTransferTokensBetweenSameAccounts,
 }
