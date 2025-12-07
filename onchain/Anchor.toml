@@ -17,3 +17,6 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
+testWithdraw = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/withdraw.ts\"" 
+testDeposit = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/deposit.ts\"" 
+testInitialization = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/onchain.ts\"" 

@@ -23,4 +23,8 @@ pub mod onchain {
     pub fn deposit(ctx: Context<Deposit>, index: u8, amount: u64) -> Result<()> {
         instructions::_deposit(ctx, index, amount)
     }
+
+    pub fn withdraw(ctx: Context<Withdraw>, index: u8, amount: u64) -> Result<()> {
+        instructions::_withdraw(ctx, index, amount)
+    }
 }

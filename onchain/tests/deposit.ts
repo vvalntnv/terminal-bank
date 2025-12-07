@@ -128,12 +128,6 @@ describe("Deposit", () => {
         program.programId
       );
 
-    // const invalidUserAta = await getAssociatedTokenAddress(
-    //   levMint,
-    //   invalidUserAccountPda,
-    //   true
-    // );
-
     try {
       await (program.methods as any)
         .deposit(invalidIndex, amount)
