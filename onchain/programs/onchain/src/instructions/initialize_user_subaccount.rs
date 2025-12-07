@@ -1,4 +1,34 @@
+use crate::constants::USER_ACCOUNT_SEED;
 use anchor_lang::prelude::*;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::Token,
+    token_interface::{Mint, TokenAccount},
+};
+
+use crate::errors::*;
+use crate::state::*;
+
+pub fn _initialize_user_subaccount(
+    ctx: Context<InitializeUserSubaccount>,
+    index: u8,
+    account_name: String,
+) -> Result<()> {
+    // initiailze the user's subbaccount
+    let user = &ctx.accounts.user;
+    let user_account_pda = &mut ctx.accounts.user_account_pda;
+
+    if account_name.len() > 32 {
+        return err!(InitializeAccountError::NameTooLong);
+    }
+
+    user_account_pda.name = account_name;
+    user_account_pda.index = index;
+    user_account_pda.owner = user.key();
+    user_account_pda.bump = ctx.bumps.user_account_pda;
+
+    Ok(())
+}
 
 #[derive(Accounts)]
 #[instruction(index: u8)]
@@ -25,15 +55,14 @@ pub struct InitializeUserSubaccount<'info> {
         associated_token::mint = lev_mint,
         associated_token::authority = user_account_pda
     )]
-    pub user_ata: InterfaceAccount<'info, anchor_spl::token::TokenAccount>,
+    pub user_ata: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
-        owner = anchor_spl::token::Token::id(),
+        owner = Token::id(),
     )]
-    pub lev_mint: InterfaceAccount<'info, anchor_spl::token::Mint>,
+    pub lev_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Program<'info, Token>,
 
     pub system_program: Program<'info, System>,
-    pub associated_token_program: Program<'info, anchor_spl::associated_token::AssociatedToken>,
-    pub token_program: Program<'info, anchor_spl::token_interface::TokenInterface>,
-    pub rent: Sysvar<'info, Rent>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
