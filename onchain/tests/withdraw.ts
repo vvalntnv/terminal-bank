@@ -24,7 +24,7 @@ describe("withdraw", () => {
   let userAta: anchor.web3.PublicKey;
 
   // Constants
-  const index = 0;
+  const index = 10;
   const accountName = "Withdraw Account";
   const initialDeposit = new anchor.BN(50_000_000); // 50 LEV
 
@@ -66,7 +66,7 @@ describe("withdraw", () => {
     // 5. Initialize the User Subaccount
     // This creates the UserAccount PDA and the User ATA
     try {
-      await program.methods
+      await (program.methods as any)
         .initialize(index, accountName)
         .accounts({
           user: user.publicKey,
@@ -110,7 +110,7 @@ describe("withdraw", () => {
 
   it("Withdraw partial amount successfully", async () => {
     const amountWithdrawn = new anchor.BN(100);
-    const sig = await program.methods
+    const sig = await (program.methods as any)
       .withdraw(index, amountWithdrawn)
       .accounts({
         user: user.publicKey,
@@ -129,18 +129,92 @@ describe("withdraw", () => {
 
   it("Withdraw full remaining amount successfully", async () => {
     // 1. Fetch current balance
+    const userAtaData = await getAccount(provider.connection, userAta);
+    const balance = userAtaData.amount;
+
     // 2. Call withdraw with the exact current balance
+    await (program.methods as any)
+      .withdraw(index, new anchor.BN(balance.toString()))
+      .accounts({
+        user: user.publicKey,
+        userAccountPda: userAccountPda,
+        levMint,
+      })
+      .signers([user.payer])
+      .rpc();
+
     // 3. Assert that the new token balance is 0
+    const userAtaDataAfter = await getAccount(provider.connection, userAta);
+    expect(userAtaDataAfter.amount.toString()).to.equal("0");
   });
 
   it("Fail to withdraw more than available balance", async () => {
     // 1. Try to withdraw an amount larger than the account balance
-    // 2. Expect the transaction to fail (likely with an Insufficient Funds error)
+    const amount = new anchor.BN(1);
+
+    try {
+      await (program.methods as any)
+        .withdraw(index, amount)
+        .accounts({
+          user: user.publicKey,
+          userAccountPda: userAccountPda,
+          levMint,
+        })
+        .signers([user.payer])
+        .rpc();
+      expect.fail("Should have failed due to Insufficient Funds");
+    } catch (e) {
+      if (e instanceof anchor.AnchorError) {
+        expect(e.error.errorCode.code).to.equal("InsufficientFunds");
+        return;
+      }
+      expect.fail(`A wrong error type has occured: ${e}`);
+    }
   });
 
   it("Fail to withdraw from valid account with wrong signer", async () => {
     // 1. Create a dummy keypair
+    const dummy = anchor.web3.Keypair.generate();
+    // Airdrop some SOL to dummy so it can pay for transaction fees if needed (though user.payer pays usually, here dummy is signer so dummy pays)
+    // Wait, if dummy is signer, dummy must pay fees unless we have another payer.
+    // In .signers([dummy]), dummy is the signer.
+    // .accounts({ user: dummy.publicKey, ... }) -> user is mut Signer.
+    // So dummy must pay. We need to fund dummy.
+
+    const signature = await provider.connection.requestAirdrop(
+      dummy.publicKey,
+      1 * anchor.web3.LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(signature);
+
+    const amount = new anchor.BN(10);
+
     // 2. Attempt to call withdraw using the user's index/accounts but signing with the dummy keypair
-    // 3. Expect an error (Signer constraint mismatch or signature verification failure)
+    try {
+      await (program.methods as any)
+        .withdraw(index, amount)
+        .accounts({
+          user: dummy.publicKey,
+          userAccountPda: userAccountPda, // This PDA belongs to original user
+          levMint,
+        })
+        .signers([dummy])
+        .rpc();
+      expect.fail("Should have failed due to constraint seeds");
+    } catch (e) {
+      // 3. Expect an error (Signer constraint mismatch or signature verification failure)
+      if (e instanceof anchor.AnchorError) {
+        // ConstraintSeeds because userAccountPda seeds won't match dummy key
+        expect(e.error.errorCode.code).to.equal("ConstraintSeeds");
+        return;
+      }
+      // Sometimes it might be "ConstraintHasOne" if checking fields, but here seeds.
+      // Or "AccountNotInitialized" if it tries to derive and fails?
+      // No, we passed an account that exists (userAccountPda).
+      // But we said it should be derived from [seed, dummy, index].
+      // Anchor will check if passed account address == derived address.
+      // They won't match. So ConstraintSeeds.
+      expect.fail(`A wrong error type has occured: ${e}`);
+    }
   });
 });
