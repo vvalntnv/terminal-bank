@@ -36,4 +36,13 @@ pub mod onchain {
     ) -> Result<()> {
         instructions::internal_transfer(ctx, sender_index, receiver_index, amount)
     }
+
+    pub fn external_transfer(
+        ctx: Context<ExternalTransfer>,
+        sender_index: u8,
+        receiver_address: Pubkey,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::_external_transfer(ctx, sender_index, receiver_address, amount)
+    }
 }

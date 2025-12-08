@@ -24,7 +24,7 @@ describe("withdraw", () => {
   let userAta: anchor.web3.PublicKey;
 
   // Constants
-  const index = 10;
+  const index = 20;
   const accountName = "Withdraw Account";
   const initialDeposit = new anchor.BN(50_000_000); // 50 LEV
 
