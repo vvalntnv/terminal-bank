@@ -7,6 +7,7 @@ import logger from "@/utils/logger.js";
 import { errorHandler } from "@/middleware/errorHandler.js";
 import { extractWalletDataMiddleware } from "./middleware/extractWallet.js";
 import { NotFoundError } from "@/errors/generalErrors.js";
+import { asyncLocalStorage } from "./utils/asyncStorage.js";
 
 const app = express();
 
@@ -34,6 +35,12 @@ app.use(extractWalletDataMiddleware);
 
 app.get("/", (_, res) => {
   res.json({ status: "OK" }).send();
+});
+
+app.get("/address", (_, res) => {
+  const wallet = asyncLocalStorage.getStore()?.keypair;
+
+  res.json({ address: wallet?.address }).send();
 });
 
 // Handle 404
