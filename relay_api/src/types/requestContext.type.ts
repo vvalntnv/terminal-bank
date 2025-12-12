@@ -1,4 +1,5 @@
+import { KeyPairSigner } from "@solana/kit";
+
 export interface RequestContext {
-  walletPubkey: string;
-  walletPrivkey: string;
+  keypair: KeyPairSigner;
 }
