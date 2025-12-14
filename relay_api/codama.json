@@ -1,0 +1,12 @@
+{
+    "idl": "../onchain/target/idl/onchain.json",
+    "before": [],
+    "scripts": {
+        "js": {
+            "from": "@codama/renderers-js",
+            "args": [
+                "./src/instructionClient"
+            ]
+        }
+    }
+}

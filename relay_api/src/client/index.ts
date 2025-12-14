@@ -1,17 +1,23 @@
-import { getWalletFromRequest } from "@/utils/walletUtils.js";
+import { getWalletFromRequest } from "@/utils/walletUtils";
 import {
   createSolanaRpc,
   sendAndConfirmTransactionFactory,
   createSolanaRpcSubscriptions,
   type MessageSigner,
   type TransactionSigner,
-} from "@solana/kit";
-import {
   Rpc,
   RpcSubscriptions,
   SolanaRpcApi,
   SolanaRpcSubscriptionsApi,
+  appendTransactionMessageInstruction,
+  BaseTransactionMessage,
+  TransactionMessageWithFeePayer,
 } from "@solana/kit";
+
+import {
+  estimateComputeUnitLimitFactory,
+  getSetComputeUnitLimitInstruction,
+} from "@solana-program/compute-budget";
 
 export type Client = {
   rpc: Rpc<SolanaRpcApi>;
@@ -19,6 +25,9 @@ export type Client = {
   wallet: TransactionSigner & MessageSigner;
   sendAndConfirmTransaction: ReturnType<
     typeof sendAndConfirmTransactionFactory
+  >;
+  estimateAndSetComputeUnitLimit: ReturnType<
+    typeof estimateAndSetComputeUnitLimitFactory
   >;
 };
 
@@ -34,10 +43,13 @@ export function createClient(): Client {
       rpc,
       rpcSubscriptions,
     });
+    const estimateAndSetComputeUnitLimit =
+      estimateAndSetComputeUnitLimitFactory({ rpc });
 
     client = {
       wallet: getWalletFromRequest(),
       rpc,
+      estimateAndSetComputeUnitLimit,
       rpcSubscriptions,
       sendAndConfirmTransaction,
     };
@@ -45,4 +57,22 @@ export function createClient(): Client {
     client.wallet = getWalletFromRequest();
   }
   return client;
+}
+
+function estimateAndSetComputeUnitLimitFactory(
+  ...params: Parameters<typeof estimateComputeUnitLimitFactory>
+) {
+  const estimateComputeUnitLimit = estimateComputeUnitLimitFactory(...params);
+  return async <
+    T extends BaseTransactionMessage & TransactionMessageWithFeePayer,
+  >(
+    transactionMessage: T,
+  ) => {
+    const computeUnitsEstimate =
+      await estimateComputeUnitLimit(transactionMessage);
+    return appendTransactionMessageInstruction(
+      getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
+      transactionMessage,
+    );
+  };
 }

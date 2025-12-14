@@ -10,8 +10,8 @@
 		"emitDeclarationOnly": false,
 		"noEmit": false,
 		"allowImportingTsExtensions": false,
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
 		"lib": [
 			"esnext"
 		],

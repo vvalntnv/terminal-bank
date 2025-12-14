@@ -42,3 +42,4 @@
 
 dist/
 relay_api/node_modules
+.surfpool/logs
