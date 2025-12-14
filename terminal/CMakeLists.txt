@@ -15,6 +15,13 @@ FetchContent_Declare(ftxui
 )
 FetchContent_MakeAvailable(ftxui)
 
+# nlohmann_json
+FetchContent_Declare(json
+    GIT_REPOSITORY https://github.com/nlohmann/json
+    GIT_TAG v3.11.3
+)
+FetchContent_MakeAvailable(json)
+
 # SQLite3
 find_package(SQLite3 REQUIRED)
 
@@ -34,4 +41,5 @@ target_link_libraries(terminal_bank
     ftxui::dom
     ftxui::component
     SQLite::SQLite3
+    nlohmann_json::nlohmann_json
 )
