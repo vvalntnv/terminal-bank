@@ -3,10 +3,11 @@
 // configured from the workspace's Anchor.toml.
 
 import * as anchor from "@coral-xyz/anchor";
+import { initMint } from "./initializeMint";
 
 module.exports = async function (provider: anchor.AnchorProvider) {
   // Configure client to use the provider.
   anchor.setProvider(provider);
 
-  // Add your deploy script here.
+  await initMint(provider);
 };
