@@ -8,8 +8,10 @@ import { errorHandler } from "@/middleware/errorHandler.js";
 import { extractWalletDataMiddleware } from "./middleware/extractWallet.js";
 import { NotFoundError } from "@/errors/generalErrors.js";
 import { asyncLocalStorage } from "./utils/asyncStorage.js";
+import router from "@/routes/index.js";
 
 const app = express();
+
 
 const morganFormat = ":method :url :status :response-time ms";
 app.use(
@@ -28,6 +30,7 @@ app.use(
   }),
 );
 
+app.use(express.json());
 app.use(helmet());
 app.use(cors());
 // Always require the wallet
@@ -36,6 +39,8 @@ app.use(extractWalletDataMiddleware);
 app.get("/", (_, res) => {
   res.json({ status: "OK" }).send();
 });
+
+app.use("/api", router);
 
 app.get("/address", (_, res) => {
   const wallet = asyncLocalStorage.getStore()?.keypair;
@@ -50,6 +55,14 @@ app.use((req, _, next) => {
 
 app.use(errorHandler);
 
-app.listen(conf.port, () => {
-  console.log(`Started listening on port ${conf.port}`);
-});
+export { app };
+
+if (process.env.NODE_ENV !== "test") {
+  app.listen(conf.port, () => {
+    console.log(`Started listening on port ${conf.port}`);
+  });
+}
+
+export const __testables__ = {
+  app
+}

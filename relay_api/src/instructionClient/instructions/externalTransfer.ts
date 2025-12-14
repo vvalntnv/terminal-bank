@@ -10,6 +10,7 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
+  getAddressDecoder,
   getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
@@ -57,9 +58,10 @@ export type ExternalTransferInstruction<
   TProgram extends string = typeof ONCHAIN_PROGRAM_ADDRESS,
   TAccountUser extends string | AccountMeta<string> = string,
   TAccountLevMint extends string | AccountMeta<string> = string,
-  TAccountSenderAccountPda extends string | AccountMeta<string> = string,
+  TAccountSenderPdaAccount extends string | AccountMeta<string> = string,
   TAccountSenderAta extends string | AccountMeta<string> = string,
-  TAccountReceiverAta extends string | AccountMeta<string> = string,
+  TAccountReceiverPdaAccount extends string | AccountMeta<string> = string,
+  TAccountReceiverAtaAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -71,17 +73,20 @@ export type ExternalTransferInstruction<
         ? WritableSignerAccount<TAccountUser> & AccountSignerMeta<TAccountUser>
         : TAccountUser,
       TAccountLevMint extends string
-        ? WritableAccount<TAccountLevMint>
+        ? ReadonlyAccount<TAccountLevMint>
         : TAccountLevMint,
-      TAccountSenderAccountPda extends string
-        ? ReadonlyAccount<TAccountSenderAccountPda>
-        : TAccountSenderAccountPda,
+      TAccountSenderPdaAccount extends string
+        ? ReadonlyAccount<TAccountSenderPdaAccount>
+        : TAccountSenderPdaAccount,
       TAccountSenderAta extends string
         ? WritableAccount<TAccountSenderAta>
         : TAccountSenderAta,
-      TAccountReceiverAta extends string
-        ? WritableAccount<TAccountReceiverAta>
-        : TAccountReceiverAta,
+      TAccountReceiverPdaAccount extends string
+        ? ReadonlyAccount<TAccountReceiverPdaAccount>
+        : TAccountReceiverPdaAccount,
+      TAccountReceiverAtaAccount extends string
+        ? WritableAccount<TAccountReceiverAtaAccount>
+        : TAccountReceiverAtaAccount,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -92,11 +97,13 @@ export type ExternalTransferInstruction<
 export type ExternalTransferInstructionData = {
   discriminator: ReadonlyUint8Array;
   senderIndex: number;
+  receiverAddress: Address;
   amount: bigint;
 };
 
 export type ExternalTransferInstructionDataArgs = {
   senderIndex: number;
+  receiverAddress: Address;
   amount: number | bigint;
 };
 
@@ -105,6 +112,7 @@ export function getExternalTransferInstructionDataEncoder(): FixedSizeEncoder<Ex
     getStructEncoder([
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["senderIndex", getU8Encoder()],
+      ["receiverAddress", getAddressEncoder()],
       ["amount", getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: EXTERNAL_TRANSFER_DISCRIMINATOR }),
@@ -115,6 +123,7 @@ export function getExternalTransferInstructionDataDecoder(): FixedSizeDecoder<Ex
   return getStructDecoder([
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["senderIndex", getU8Decoder()],
+    ["receiverAddress", getAddressDecoder()],
     ["amount", getU64Decoder()],
   ]);
 }
@@ -132,36 +141,41 @@ export function getExternalTransferInstructionDataCodec(): FixedSizeCodec<
 export type ExternalTransferAsyncInput<
   TAccountUser extends string = string,
   TAccountLevMint extends string = string,
-  TAccountSenderAccountPda extends string = string,
+  TAccountSenderPdaAccount extends string = string,
   TAccountSenderAta extends string = string,
-  TAccountReceiverAta extends string = string,
+  TAccountReceiverPdaAccount extends string = string,
+  TAccountReceiverAtaAccount extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   user: TransactionSigner<TAccountUser>;
   levMint: Address<TAccountLevMint>;
-  senderAccountPda: Address<TAccountSenderAccountPda>;
+  senderPdaAccount: Address<TAccountSenderPdaAccount>;
   senderAta?: Address<TAccountSenderAta>;
-  receiverAta: Address<TAccountReceiverAta>;
+  receiverPdaAccount: Address<TAccountReceiverPdaAccount>;
+  receiverAtaAccount?: Address<TAccountReceiverAtaAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
   senderIndex: ExternalTransferInstructionDataArgs["senderIndex"];
+  receiverAddress: ExternalTransferInstructionDataArgs["receiverAddress"];
   amount: ExternalTransferInstructionDataArgs["amount"];
 };
 
 export async function getExternalTransferInstructionAsync<
   TAccountUser extends string,
   TAccountLevMint extends string,
-  TAccountSenderAccountPda extends string,
+  TAccountSenderPdaAccount extends string,
   TAccountSenderAta extends string,
-  TAccountReceiverAta extends string,
+  TAccountReceiverPdaAccount extends string,
+  TAccountReceiverAtaAccount extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof ONCHAIN_PROGRAM_ADDRESS,
 >(
   input: ExternalTransferAsyncInput<
     TAccountUser,
     TAccountLevMint,
-    TAccountSenderAccountPda,
+    TAccountSenderPdaAccount,
     TAccountSenderAta,
-    TAccountReceiverAta,
+    TAccountReceiverPdaAccount,
+    TAccountReceiverAtaAccount,
     TAccountTokenProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -170,9 +184,10 @@ export async function getExternalTransferInstructionAsync<
     TProgramAddress,
     TAccountUser,
     TAccountLevMint,
-    TAccountSenderAccountPda,
+    TAccountSenderPdaAccount,
     TAccountSenderAta,
-    TAccountReceiverAta,
+    TAccountReceiverPdaAccount,
+    TAccountReceiverAtaAccount,
     TAccountTokenProgram
   >
 > {
@@ -182,13 +197,20 @@ export async function getExternalTransferInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     user: { value: input.user ?? null, isWritable: true },
-    levMint: { value: input.levMint ?? null, isWritable: true },
-    senderAccountPda: {
-      value: input.senderAccountPda ?? null,
+    levMint: { value: input.levMint ?? null, isWritable: false },
+    senderPdaAccount: {
+      value: input.senderPdaAccount ?? null,
       isWritable: false,
     },
     senderAta: { value: input.senderAta ?? null, isWritable: true },
-    receiverAta: { value: input.receiverAta ?? null, isWritable: true },
+    receiverPdaAccount: {
+      value: input.receiverPdaAccount ?? null,
+      isWritable: false,
+    },
+    receiverAtaAccount: {
+      value: input.receiverAtaAccount ?? null,
+      isWritable: true,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -206,7 +228,26 @@ export async function getExternalTransferInstructionAsync<
         "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
       seeds: [
         getAddressEncoder().encode(
-          expectAddress(accounts.senderAccountPda.value),
+          expectAddress(accounts.senderPdaAccount.value),
+        ),
+        getBytesEncoder().encode(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ]),
+        ),
+        getAddressEncoder().encode(expectAddress(accounts.levMint.value)),
+      ],
+    });
+  }
+  if (!accounts.receiverAtaAccount.value) {
+    accounts.receiverAtaAccount.value = await getProgramDerivedAddress({
+      programAddress:
+        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" as Address<"ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL">,
+      seeds: [
+        getAddressEncoder().encode(
+          expectAddress(accounts.receiverPdaAccount.value),
         ),
         getBytesEncoder().encode(
           new Uint8Array([
@@ -229,9 +270,10 @@ export async function getExternalTransferInstructionAsync<
     accounts: [
       getAccountMeta(accounts.user),
       getAccountMeta(accounts.levMint),
-      getAccountMeta(accounts.senderAccountPda),
+      getAccountMeta(accounts.senderPdaAccount),
       getAccountMeta(accounts.senderAta),
-      getAccountMeta(accounts.receiverAta),
+      getAccountMeta(accounts.receiverPdaAccount),
+      getAccountMeta(accounts.receiverAtaAccount),
       getAccountMeta(accounts.tokenProgram),
     ],
     data: getExternalTransferInstructionDataEncoder().encode(
@@ -242,9 +284,10 @@ export async function getExternalTransferInstructionAsync<
     TProgramAddress,
     TAccountUser,
     TAccountLevMint,
-    TAccountSenderAccountPda,
+    TAccountSenderPdaAccount,
     TAccountSenderAta,
-    TAccountReceiverAta,
+    TAccountReceiverPdaAccount,
+    TAccountReceiverAtaAccount,
     TAccountTokenProgram
   >);
 }
@@ -252,36 +295,41 @@ export async function getExternalTransferInstructionAsync<
 export type ExternalTransferInput<
   TAccountUser extends string = string,
   TAccountLevMint extends string = string,
-  TAccountSenderAccountPda extends string = string,
+  TAccountSenderPdaAccount extends string = string,
   TAccountSenderAta extends string = string,
-  TAccountReceiverAta extends string = string,
+  TAccountReceiverPdaAccount extends string = string,
+  TAccountReceiverAtaAccount extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   user: TransactionSigner<TAccountUser>;
   levMint: Address<TAccountLevMint>;
-  senderAccountPda: Address<TAccountSenderAccountPda>;
+  senderPdaAccount: Address<TAccountSenderPdaAccount>;
   senderAta: Address<TAccountSenderAta>;
-  receiverAta: Address<TAccountReceiverAta>;
+  receiverPdaAccount: Address<TAccountReceiverPdaAccount>;
+  receiverAtaAccount: Address<TAccountReceiverAtaAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
   senderIndex: ExternalTransferInstructionDataArgs["senderIndex"];
+  receiverAddress: ExternalTransferInstructionDataArgs["receiverAddress"];
   amount: ExternalTransferInstructionDataArgs["amount"];
 };
 
 export function getExternalTransferInstruction<
   TAccountUser extends string,
   TAccountLevMint extends string,
-  TAccountSenderAccountPda extends string,
+  TAccountSenderPdaAccount extends string,
   TAccountSenderAta extends string,
-  TAccountReceiverAta extends string,
+  TAccountReceiverPdaAccount extends string,
+  TAccountReceiverAtaAccount extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof ONCHAIN_PROGRAM_ADDRESS,
 >(
   input: ExternalTransferInput<
     TAccountUser,
     TAccountLevMint,
-    TAccountSenderAccountPda,
+    TAccountSenderPdaAccount,
     TAccountSenderAta,
-    TAccountReceiverAta,
+    TAccountReceiverPdaAccount,
+    TAccountReceiverAtaAccount,
     TAccountTokenProgram
   >,
   config?: { programAddress?: TProgramAddress },
@@ -289,9 +337,10 @@ export function getExternalTransferInstruction<
   TProgramAddress,
   TAccountUser,
   TAccountLevMint,
-  TAccountSenderAccountPda,
+  TAccountSenderPdaAccount,
   TAccountSenderAta,
-  TAccountReceiverAta,
+  TAccountReceiverPdaAccount,
+  TAccountReceiverAtaAccount,
   TAccountTokenProgram
 > {
   // Program address.
@@ -300,13 +349,20 @@ export function getExternalTransferInstruction<
   // Original accounts.
   const originalAccounts = {
     user: { value: input.user ?? null, isWritable: true },
-    levMint: { value: input.levMint ?? null, isWritable: true },
-    senderAccountPda: {
-      value: input.senderAccountPda ?? null,
+    levMint: { value: input.levMint ?? null, isWritable: false },
+    senderPdaAccount: {
+      value: input.senderPdaAccount ?? null,
       isWritable: false,
     },
     senderAta: { value: input.senderAta ?? null, isWritable: true },
-    receiverAta: { value: input.receiverAta ?? null, isWritable: true },
+    receiverPdaAccount: {
+      value: input.receiverPdaAccount ?? null,
+      isWritable: false,
+    },
+    receiverAtaAccount: {
+      value: input.receiverAtaAccount ?? null,
+      isWritable: true,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -328,9 +384,10 @@ export function getExternalTransferInstruction<
     accounts: [
       getAccountMeta(accounts.user),
       getAccountMeta(accounts.levMint),
-      getAccountMeta(accounts.senderAccountPda),
+      getAccountMeta(accounts.senderPdaAccount),
       getAccountMeta(accounts.senderAta),
-      getAccountMeta(accounts.receiverAta),
+      getAccountMeta(accounts.receiverPdaAccount),
+      getAccountMeta(accounts.receiverAtaAccount),
       getAccountMeta(accounts.tokenProgram),
     ],
     data: getExternalTransferInstructionDataEncoder().encode(
@@ -341,9 +398,10 @@ export function getExternalTransferInstruction<
     TProgramAddress,
     TAccountUser,
     TAccountLevMint,
-    TAccountSenderAccountPda,
+    TAccountSenderPdaAccount,
     TAccountSenderAta,
-    TAccountReceiverAta,
+    TAccountReceiverPdaAccount,
+    TAccountReceiverAtaAccount,
     TAccountTokenProgram
   >);
 }
@@ -356,10 +414,11 @@ export type ParsedExternalTransferInstruction<
   accounts: {
     user: TAccountMetas[0];
     levMint: TAccountMetas[1];
-    senderAccountPda: TAccountMetas[2];
+    senderPdaAccount: TAccountMetas[2];
     senderAta: TAccountMetas[3];
-    receiverAta: TAccountMetas[4];
-    tokenProgram: TAccountMetas[5];
+    receiverPdaAccount: TAccountMetas[4];
+    receiverAtaAccount: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
   };
   data: ExternalTransferInstructionData;
 };
@@ -372,7 +431,7 @@ export function parseExternalTransferInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedExternalTransferInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error("Not enough accounts");
   }
@@ -387,9 +446,10 @@ export function parseExternalTransferInstruction<
     accounts: {
       user: getNextAccount(),
       levMint: getNextAccount(),
-      senderAccountPda: getNextAccount(),
+      senderPdaAccount: getNextAccount(),
       senderAta: getNextAccount(),
-      receiverAta: getNextAccount(),
+      receiverPdaAccount: getNextAccount(),
+      receiverAtaAccount: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
     data: getExternalTransferInstructionDataDecoder().decode(instruction.data),

@@ -22,7 +22,7 @@ import {
 } from "../instructions";
 
 export const ONCHAIN_PROGRAM_ADDRESS =
-  "CJ5ysHVQzRNQqSDoPekKhhyq1i11Wn15WbUhKRZYScqg" as Address<"CJ5ysHVQzRNQqSDoPekKhhyq1i11Wn15WbUhKRZYScqg">;
+  "7SQEGyPgr3SdRz9KCFkrFLhkGb3ojKyJALWucvXy9rDk" as Address<"7SQEGyPgr3SdRz9KCFkrFLhkGb3ojKyJALWucvXy9rDk">;
 
 export enum OnchainAccount {
   UserAccount,
@@ -121,7 +121,7 @@ export function identifyOnchainInstruction(
 }
 
 export type ParsedOnchainInstruction<
-  TProgram extends string = "CJ5ysHVQzRNQqSDoPekKhhyq1i11Wn15WbUhKRZYScqg",
+  TProgram extends string = "7SQEGyPgr3SdRz9KCFkrFLhkGb3ojKyJALWucvXy9rDk",
 > =
   | ({
       instructionType: OnchainInstruction.Deposit;

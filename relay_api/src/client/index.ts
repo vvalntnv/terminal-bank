@@ -1,3 +1,4 @@
+import conf from "@/config";
 import { getWalletFromRequest } from "@/utils/walletUtils";
 import {
   createSolanaRpc,
@@ -34,7 +35,7 @@ export type Client = {
 let client: Client | undefined;
 export function createClient(): Client {
   if (!client) {
-    const rpc = createSolanaRpc("http://127.0.0.1:8899");
+    const rpc = createSolanaRpc(conf.solanaRpcEndpoint);
     const rpcSubscriptions = createSolanaRpcSubscriptions(
       "ws://127.0.0.1:8900",
     );

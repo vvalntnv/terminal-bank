@@ -1,11 +1,6 @@
-import { createClient } from "@/client/index.js";
-import { getInitializeInstructionAsync } from "@/instructionClient";
-import { getMintAddress } from "@/utils/mintUtils";
-import { getUserAccountPda } from "@/utils/userUtils";
 import {
   createTransactionMessage,
   setTransactionMessageFeePayerSigner,
-  TransactionSigner,
   pipe,
   appendTransactionMessageInstruction,
   setTransactionMessageLifetimeUsingBlockhash,
@@ -13,34 +8,14 @@ import {
   assertIsSendableTransaction,
   assertIsTransactionWithBlockhashLifetime,
   getSignatureFromTransaction,
+  Instruction,
 } from "@solana/kit";
+import { createClient } from "@/client/index.js";
 
-export interface InitializeUserAccountArgs {
-  userAccountId: number;
-  userAccountName: string;
-  user: TransactionSigner;
-}
-
-export async function initializeUserAccount({
-  userAccountId,
-  userAccountName,
-  user,
-}: InitializeUserAccountArgs) {
-  const client = createClient();
-  const levMint = getMintAddress();
-  const [userAccountPda, _] = await getUserAccountPda(
-    client.wallet.address,
-    userAccountId,
-  );
-
-  const instruction = await getInitializeInstructionAsync({
-    index: userAccountId,
-    accountName: userAccountName,
-    user,
-    levMint,
-    userAccountPda,
-  });
-
+export async function sendTransaction(
+  client: ReturnType<typeof createClient>,
+  instruction: Instruction,
+) {
   const { value: latestBlockhash } = await client.rpc
     .getLatestBlockhash()
     .send();
@@ -55,7 +30,12 @@ export async function initializeUserAccount({
   assertIsSendableTransaction(tx);
   assertIsTransactionWithBlockhashLifetime(tx);
 
-  client.sendAndConfirmTransaction(tx, { commitment: "confirmed" });
+  try {
+    await client.sendAndConfirmTransaction(tx, { commitment: "confirmed" });
+  } catch (e) {
+    console.error("Transaction failed:", e);
+    throw e;
+  }
 
   return getSignatureFromTransaction(tx);
 }

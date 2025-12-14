@@ -6,7 +6,7 @@ mod state;
 use anchor_lang::prelude::*;
 use instructions::*;
 
-declare_id!("CJ5ysHVQzRNQqSDoPekKhhyq1i11Wn15WbUhKRZYScqg");
+declare_id!("7SQEGyPgr3SdRz9KCFkrFLhkGb3ojKyJALWucvXy9rDk");
 
 #[program]
 pub mod onchain {

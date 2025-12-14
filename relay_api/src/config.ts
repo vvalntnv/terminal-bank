@@ -13,12 +13,12 @@ interface Config {
 const conf: Config = {
   port: Number(process.env.PORT || "8080"),
   nodeEnv: process.env.NODE_ENV || "development",
-  solanaRpcEndpoint: process.env.SOLANA_RPC || "https://localhost:8899", // default test-validator port
+  solanaRpcEndpoint: process.env.SOLANA_RPC || "http://localhost:8899", // default test-validator port
   mintAddress:
-    process.env.MINT_ADDRESS || "41TpbodVtBJCGckytTuMQHzjza63NYX2BNwJRCs7fhZR",
+    process.env.MINT_ADDRESS || "DP7EEP8wPWK6WbBVxHfLXEEW1Hg3kxV5iRE4eUwUQqdd",
   mintAuthAddress:
     process.env.MINT_AUTH_ADDRESS ||
-    "AzipKXtgdz6cf9K8MLBJSTAJQPQYWSwJJsMXumXwe5Mh",
+    "8Qru4etbqJDGBWSA2UfMStnuwAPQ2q9wCaG1VG58S812",
 };
 
 export default conf;
