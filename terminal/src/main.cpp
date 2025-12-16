@@ -1,9 +1,11 @@
 #include "services/DatabaseService.hpp"
+#include "services/RelayService.hpp"
+#include "infra/relay/RelayAPIClient.hpp"
 #include "utils/ConfigManager.hpp"
 #include "utils/SolanaUtils.hpp"
 #include "utils/Base58.hpp"
 #include "tui/screens/WelcomeScreen.hpp"
-#include "tui/screens/HomeScreen.hpp"
+#include "tui/components/MainLayout.hpp"
 #include "tui/components/GlobalWrapper.hpp"
 #include <ftxui/component/screen_interactive.hpp>
 #include <iostream>
@@ -12,6 +14,10 @@
 int main() {
     auto screen = ftxui::ScreenInteractive::Fullscreen();
     auto dbService = std::make_shared<services::DatabaseService>("terminal.db");
+    
+    // Initialize Relay Infrastructure
+    auto relayClient = std::make_shared<infra::RelayAPIClient>("http://localhost:3000");
+    auto relayService = std::make_shared<services::RelayService>(relayClient);
 
     try {
         dbService->init();
@@ -52,8 +58,8 @@ int main() {
                 auto user = dbService->getUserByPublicKey(pubKeyStr);
                 
                 if (user) {
-                    // Valid Session -> Go Home
-                    component = tui::screens::HomeScreen(user->name, onLogout);
+                    // Valid Session -> Go Main Layout
+                    component = tui::components::MainLayout(user->name, relayService, onLogout);
                 }
             }
             
@@ -65,7 +71,7 @@ int main() {
 
         // 2. No Session (or invalid) -> Show Welcome
         if (!component) {
-             component = tui::screens::WelcomeScreen(dbService, onLoginSuccess);
+             component = tui::screens::WelcomeScreen(dbService, relayService, onLoginSuccess);
         }
         
         // Wrap with Global Handler (Footer + Esc/Ctrl-C logic)

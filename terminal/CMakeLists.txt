@@ -22,6 +22,13 @@ FetchContent_Declare(json
 )
 FetchContent_MakeAvailable(json)
 
+# CPR (C++ Requests)
+FetchContent_Declare(cpr
+    GIT_REPOSITORY https://github.com/libcpr/cpr.git
+    GIT_TAG 1.10.5
+)
+FetchContent_MakeAvailable(cpr)
+
 # SQLite3
 find_package(SQLite3 REQUIRED)
 
@@ -42,4 +49,5 @@ target_link_libraries(terminal_bank
     ftxui::component
     SQLite::SQLite3
     nlohmann_json::nlohmann_json
+    cpr::cpr
 )

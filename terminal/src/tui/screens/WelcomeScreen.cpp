@@ -13,12 +13,14 @@ namespace tui {
 namespace screens {
 
 Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
+                        std::shared_ptr<services::RelayService> relayService,
                         std::function<void()> onLoginSuccess) {
   class Impl : public ComponentBase {
   public:
     Impl(std::shared_ptr<services::DatabaseService> db,
+         std::shared_ptr<services::RelayService> relay,
          std::function<void()> onLogin)
-        : dbService_(db), onLogin_(onLogin) {
+        : dbService_(db), relayService_(relay), onLogin_(onLogin) {
 
       // --- Login Form Components ---
       login_users = dbService_->getAllUsers();
@@ -225,6 +227,7 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
 
   private:
     std::shared_ptr<services::DatabaseService> dbService_;
+    std::shared_ptr<services::RelayService> relayService_;
     std::function<void()> onLogin_;
 
     // State
@@ -274,7 +277,7 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
                                                   "From Keys Dir"};
   };
 
-  return Make<Impl>(dbService, onLoginSuccess);
+  return Make<Impl>(dbService, relayService, onLoginSuccess);
 }
 
 } // namespace screens
