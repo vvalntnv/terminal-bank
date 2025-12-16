@@ -49,7 +49,7 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
         // Construct path based on toggle
         std::string finalKeyPath;
         if (login_key_source_selected == 1) { // From Keys Dir
-          login_input = Input(&key_path_login, "Filename (without extension)");
+          // No need to set login_input placeholder here as we switched component
           std::string keysDir = utils::ConfigManager::getKeysDirectory();
           std::string filename = key_path_login;
           if (filename.find(".json") == std::string::npos) {
@@ -80,12 +80,21 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
         onLogin_();
       });
 
-      login_input = Input(&key_path_login, "Absolute Path");
+                    login_input_abs = Input(&key_path_login, "Absolute Path");
+                    login_input_file = Input(&key_path_login, "Filename (without extension)");
 
-      login_container = Container::Vertical(
-          {user_menu, login_key_source_toggle, login_input, login_button});
+                    login_container = Container::Vertical({
+                        user_menu,
+                        login_key_source_toggle,
+                        Container::Tab({
+                            login_input_abs,
+                            login_input_file
+                        }, &login_key_source_selected),
+                        login_button
+                    });
 
-      // --- Register Form Components ---
+
+                    // --- Register Form Components ---
       reg_button = Button("Create Account", [this] {
         if (reg_name.empty() || reg_key_path.empty()) {
           status_text = "Please fill all fields.";
@@ -151,13 +160,22 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
       reg_input_name = Input(&reg_name, "Name");
       reg_input_age = Input(&reg_age, "Age");
       reg_input_phone = Input(&reg_phone, "Phone");
-      reg_input_key = Input(&reg_key_path, "Filename (without extension)");
+                    reg_input_abs = Input(&reg_key_path, "Absolute Path");
+                    reg_input_file = Input(&reg_key_path, "Filename (without extension)");
 
-      reg_container =
-          Container::Vertical({reg_input_name, reg_input_age, reg_input_phone,
-                               key_source_toggle, reg_input_key, reg_button});
+                    reg_container = Container::Vertical({
+                        reg_input_name,
+                        reg_input_age,
+                        reg_input_phone,
+                        key_source_toggle,
+                        Container::Tab({
+                            reg_input_abs,
+                            reg_input_file
+                        }, &key_source_selected),
+                        reg_button
+                    });
 
-      // Top Level Tab
+                    // Top Level Tab
       tab_toggle = Toggle(&tab_values, &tab_selected);
 
       main_container = Container::Vertical(
@@ -187,7 +205,7 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
       return vbox({text("Select User:"), user_menu->Render() | border,
                    separator(), text("Key Source:"),
                    login_key_source_toggle->Render(), text(key_label),
-                   login_input->Render() | border,
+                   (is_login_from_dir ? login_input_file->Render() : login_input_abs->Render()) | border,
                    login_button->Render() | align_right});
     }
 
@@ -201,7 +219,7 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
                          reg_input_phone->Render() | border | flex}),
                    separator(), text("Wallet Setup"),
                    key_source_toggle->Render(), text(key_label),
-                   reg_input_key->Render() | border,
+                   (is_generating_new ? reg_input_file->Render() : reg_input_abs->Render()) | border,
                    reg_button->Render() | align_right});
     }
 
@@ -223,7 +241,9 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
     bool is_login_from_dir = false;
 
     Component user_menu;
-    Component login_input;
+    // Component login_input; // Removed
+    Component login_input_abs;
+    Component login_input_file;
     Component login_button;
     Component login_key_source_toggle;
     Component login_container;
@@ -239,7 +259,9 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
     Component reg_input_name;
     Component reg_input_age;
     Component reg_input_phone;
-    Component reg_input_key;
+    // Component reg_input_key; // Removed
+    Component reg_input_abs;
+    Component reg_input_file;
     Component key_source_toggle;
     Component reg_button;
     Component reg_container;
