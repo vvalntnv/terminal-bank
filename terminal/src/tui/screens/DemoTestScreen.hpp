@@ -2,9 +2,9 @@
 #include <ftxui/component/component.hpp>
 
 namespace tui {
-    namespace screens {
+namespace screens {
 
-        ftxui::Component DemoTestScreen();
+ftxui::Component DemoTestScreen();
 
-    }
 }
+} // namespace tui

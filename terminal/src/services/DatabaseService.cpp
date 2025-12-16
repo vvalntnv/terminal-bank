@@ -1,4 +1,6 @@
 #include "DatabaseService.hpp"
+#include <iostream>
+#include <sstream>
 
 namespace services {
 
@@ -14,7 +16,7 @@ void DatabaseService::init() {
                                 "age INTEGER,"
                                 "phone_number TEXT,"
                                 "wallet_address TEXT,"
-                                "public_key TEXT NOT NULL"
+                                "public_key TEXT NOT NULL UNIQUE"
                                 ");";
   db_->execute(createUserTable);
 
@@ -40,6 +42,53 @@ void DatabaseService::init() {
                                   "timestamp INTEGER"
                                   ");";
   db_->execute(createEventsTable);
+}
+
+void DatabaseService::createUser(const models::User& user) {
+    std::string sql = "INSERT INTO user (name, age, phone_number, wallet_address, public_key) VALUES ('" +
+                      user.name + "', " +
+                      std::to_string(user.age) + ", '" +
+                      user.phoneNumber + "', '" +
+                      user.walletAddress + "', '" +
+                      user.publicKey + "');";
+    db_->execute(sql);
+}
+
+std::vector<models::User> DatabaseService::getAllUsers() {
+    std::string sql = "SELECT * FROM user;";
+    auto results = db_->query(sql);
+    
+    std::vector<models::User> users;
+    for (const auto& row : results) {
+        models::User user;
+        user.id = std::stoi(row.at("id"));
+        user.name = row.at("name");
+        user.age = std::stoi(row.at("age"));
+        user.phoneNumber = row.at("phone_number");
+        user.walletAddress = row.at("wallet_address");
+        user.publicKey = row.at("public_key");
+        users.push_back(user);
+    }
+    return users;
+}
+
+std::optional<models::User> DatabaseService::getUserByPublicKey(const std::string& pubKey) {
+    std::string sql = "SELECT * FROM user WHERE public_key = '" + pubKey + "';";
+    auto results = db_->query(sql);
+
+    if (results.empty()) {
+        return std::nullopt;
+    }
+
+    const auto& row = results[0];
+    models::User user;
+    user.id = std::stoi(row.at("id"));
+    user.name = row.at("name");
+    user.age = std::stoi(row.at("age"));
+    user.phoneNumber = row.at("phone_number");
+    user.walletAddress = row.at("wallet_address");
+    user.publicKey = row.at("public_key");
+    return user;
 }
 
 } // namespace services

@@ -45,3 +45,4 @@ relay_api/node_modules
 .surfpool/logs
 test-ledger
 terminal/build
+terminal/.cache/clangd/index

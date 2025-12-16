@@ -30,4 +30,29 @@ void SQLiteWrapper::execute(const std::string& query) {
     }
 }
 
+std::vector<std::map<std::string, std::string>> SQLiteWrapper::query(const std::string& query) {
+    std::vector<std::map<std::string, std::string>> results;
+    char* zErrMsg = 0;
+    
+    auto callback = [](void* data, int argc, char** argv, char** azColName) -> int {
+        auto* rows = static_cast<std::vector<std::map<std::string, std::string>>*>(data);
+        std::map<std::string, std::string> row;
+        for (int i = 0; i < argc; i++) {
+            row[azColName[i]] = argv[i] ? argv[i] : "NULL";
+        }
+        rows->push_back(row);
+        return 0;
+    };
+
+    int rc = sqlite3_exec(db_, query.c_str(), callback, &results, &zErrMsg);
+    
+    if (rc != SQLITE_OK) {
+        std::string errMsg = "SQL query error: " + std::string(zErrMsg);
+        sqlite3_free(zErrMsg);
+        throw std::runtime_error(errMsg);
+    }
+
+    return results;
+}
+
 } // namespace infra::database

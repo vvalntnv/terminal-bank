@@ -1,6 +1,8 @@
 #pragma once
-
 #include <string>
+#include <vector>
+#include <map>
+#include <functional>
 #include <sqlite3.h>
 
 namespace infra::database {
@@ -11,8 +13,9 @@ public:
     ~SQLiteWrapper();
 
     void execute(const std::string& query);
-    // Helper for executing queries with callbacks if needed later, 
-    // but for now execute is enough for initialization.
+    
+    // Executes a query and returns a vector of rows, where each row is a map of column name -> value
+    std::vector<std::map<std::string, std::string>> query(const std::string& query);
 
     sqlite3* getHandle() const { return db_; }
 
