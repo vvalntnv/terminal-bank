@@ -31,7 +31,7 @@ namespace tui::components {
                 : userName_(name), onLogout_(logout), relayService_(relay), dbService_(db), user_(u) {
                 
                 // 1. Initialize Screens
-                auto home = screens::HomeScreen(name, logout);
+                auto home = screens::HomeScreen(u, db, logout);
                 
                 // Pass dependencies to CreateBankAccountScreen
                 auto create_account = screens::CreateBankAccountScreen(relay, db, u);
