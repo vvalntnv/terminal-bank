@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include "../../services/DatabaseService.hpp"
+#include "../../services/RelayService.hpp"
 #include "../../models/User.hpp"
 
 namespace tui {
@@ -12,7 +13,9 @@ namespace tui {
         ftxui::Component HomeScreen(
             const models::User& user, 
             std::shared_ptr<services::DatabaseService> dbService,
-            std::function<void()> onLogout
+            std::function<void()> onLogout,
+            std::function<void(std::function<void()>)> post_task,
+            std::shared_ptr<services::RelayService> relayService
         );
 
     }

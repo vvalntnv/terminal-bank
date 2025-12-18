@@ -66,6 +66,13 @@ public:
         const std::string& privKey
     );
 
+    // GET /api/account-balance/:accountId
+    std::string GetBalance(
+        int accountId,
+        const std::string& pubKey,
+        const std::string& privKey
+    );
+
 private:
     std::string baseUrl;
 

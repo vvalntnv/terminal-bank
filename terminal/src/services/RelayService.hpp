@@ -32,6 +32,12 @@ public:
                                uint64_t amount, const std::string &pubKey,
                                const std::string &privKey);
 
+  std::string GetBalance(
+      int accountId,
+      const std::string &pubKey,
+      const std::string &privKey
+  );
+
 private:
   std::shared_ptr<infra::RelayAPIClient> client;
 };

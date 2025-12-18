@@ -88,6 +88,36 @@ std::string RelayAPIClient::ExternalTransfer(
     return makeRequest("/api/transfer/external", payload, pubKey, privKey);
 }
 
+std::string RelayAPIClient::GetBalance(
+    int accountId,
+    const std::string& pubKey,
+    const std::string& privKey
+) {
+    std::string url = baseUrl + "/api/account-balance/" + std::to_string(accountId);
+    
+    cpr::Response r = cpr::Get(
+        cpr::Url{url},
+        cpr::Header{
+            {"Content-Type", "application/json"},
+            {"X-PUB-KEY", pubKey},
+            {"X-PRIV-KEY", privKey}
+        }
+    );
+
+    if (r.status_code >= 200 && r.status_code < 300) {
+        try {
+            auto jsonResponse = nlohmann::json::parse(r.text);
+            if (jsonResponse.contains("amount")) {
+                return jsonResponse["amount"].get<std::string>();
+            }
+            return "0.00";
+        } catch (...) {
+            return "Error";
+        }
+    }
+    return "Error: " + r.text;
+}
+
 std::string RelayAPIClient::makeRequest(
     const std::string& endpoint,
     const nlohmann::json& payload,
@@ -111,7 +141,7 @@ std::string RelayAPIClient::makeRequest(
             auto jsonResponse = nlohmann::json::parse(r.text);
             if (jsonResponse.contains("signature")) {
                 return jsonResponse["signature"].get<std::string>();
-            }  
+            }
             if (jsonResponse.contains("address")) {
                 return jsonResponse["address"].get<std::string>();
             }

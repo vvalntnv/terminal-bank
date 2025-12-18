@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <cmath>
+#include <iomanip>
 
 using json = nlohmann::json;
 
@@ -43,6 +45,18 @@ namespace utils {
 
         } catch (const std::exception& e) {
             return std::nullopt;
+        }
+    }
+
+    uint64_t SolanaUtils::ParseTokenAmount(const std::string& amountStr) {
+        try {
+            double amount_d = std::stod(amountStr);
+            if (amount_d <= 0) return 0;
+            
+            // Multiply by 10^9 and round
+            return static_cast<uint64_t>(std::round(amount_d * 1000000000.0));
+        } catch (...) {
+            return 0;
         }
     }
 

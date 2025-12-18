@@ -44,4 +44,12 @@ std::string RelayService::ExternalTransfer(int fromIdx,
   return client->ExternalTransfer(fromIdx, toAddr, amount, pubKey, privKey);
 }
 
+std::string RelayService::GetBalance(
+    int accountId,
+    const std::string &pubKey,
+    const std::string &privKey
+) {
+    return client->GetBalance(accountId, pubKey, privKey);
+}
+
 } // namespace services

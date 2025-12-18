@@ -22,6 +22,7 @@ void DatabaseService::init() {
   db_->execute(createUserTable);
 
   // 2. Bank Accounts Table
+  // Added 'balance' column
   std::string createAccountTable = "CREATE TABLE IF NOT EXISTS account ("
                                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                                    "seed_index INTEGER NOT NULL,"
@@ -29,7 +30,8 @@ void DatabaseService::init() {
                                    "pub_key TEXT,"
                                    "token_symbol TEXT DEFAULT 'LEV',"
                                    "pda_pub_key TEXT,"
-                                   "ata_pub_key TEXT"
+                                   "ata_pub_key TEXT,"
+                                   "balance TEXT DEFAULT '0.00'"
                                    ");";
   db_->execute(createAccountTable);
 
@@ -93,13 +95,14 @@ std::optional<models::User> DatabaseService::getUserByPublicKey(const std::strin
 }
 
 void DatabaseService::createAccount(const models::Account& account) {
-    std::string sql = "INSERT INTO account (seed_index, account_name, pub_key, token_symbol, pda_pub_key, ata_pub_key) VALUES (" +
+    std::string sql = "INSERT INTO account (seed_index, account_name, pub_key, token_symbol, pda_pub_key, ata_pub_key, balance) VALUES (" +
                       std::to_string(account.seedIndex) + ", '" +
                       account.accountName + "', '" +
                       account.pubKey + "', '" +
                       account.tokenSymbol + "', '" +
                       account.pdaPubKey + "', '" +
-                      account.ataPubKey + "');";
+                      account.ataPubKey + "', '" +
+                      account.balance + "');";
     db_->execute(sql);
 }
 
@@ -129,9 +132,20 @@ std::vector<models::Account> DatabaseService::getAccountsForUser(const std::stri
         acc.tokenSymbol = row.at("token_symbol");
         acc.pdaPubKey = row.at("pda_pub_key");
         acc.ataPubKey = row.at("ata_pub_key");
+        // Handle balance field
+        if (row.find("balance") != row.end()) {
+            acc.balance = row.at("balance");
+        } else {
+            acc.balance = "0.00";
+        }
         accounts.push_back(acc);
     }
     return accounts;
+}
+
+void DatabaseService::updateAccountBalance(int seedIndex, const std::string& balance) {
+    std::string sql = "UPDATE account SET balance = '" + balance + "' WHERE seed_index = " + std::to_string(seedIndex) + ";";
+    db_->execute(sql);
 }
 
 } // namespace services

@@ -13,6 +13,7 @@ namespace tui::components {
         std::function<void()> onLogout,
         std::shared_ptr<services::RelayService> relayService,
         std::shared_ptr<services::DatabaseService> dbService,
-        const models::User& user
+        const models::User& user,
+        std::function<void(std::function<void()>)> post_task // New argument
     );
 }

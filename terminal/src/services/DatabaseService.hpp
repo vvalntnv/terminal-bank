@@ -24,6 +24,7 @@ public:
     void createAccount(const models::Account& account);
     int getNextSeedIndex();
     std::vector<models::Account> getAccountsForUser(const std::string& userPubKey);
+    void updateAccountBalance(int seedIndex, const std::string& balance);
 
 private:
     std::unique_ptr<infra::database::SQLiteWrapper> db_;

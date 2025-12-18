@@ -1,27 +1,19 @@
 import { createClient } from "@/client";
-import { AccountBalanceRequest, accountBalanceSchema } from "@/schemas/balance";
 import { getUserAccountPda, getUserAta } from "@/utils/userUtils";
-import {
-  Address,
-  getAddressDecoder,
-  getAddressFromPublicKey,
-} from "@solana/kit";
+import { Address } from "@solana/kit";
 import { Request, Response, NextFunction } from "express";
 
 export async function accountBalanceController(
-  req: Request<{ accountId: number }>,
+  req: Request<{ accountId: string }>,
   res: Response,
   next: NextFunction,
 ) {
   try {
     const client = createClient();
     // validate the data
-    const data = accountBalanceSchema.parse(req.params);
+    const accountId = Number(req.params.accountId);
 
-    const [pda] = await getUserAccountPda(
-      client.wallet.address,
-      data.accountId,
-    );
+    const [pda] = await getUserAccountPda(client.wallet.address, accountId);
 
     const ata = await getUserAta(pda);
     const ataAddress = ata.toBase58() as Address;
@@ -31,7 +23,7 @@ export async function accountBalanceController(
       .send();
 
     const totalLevs = accountData.uiAmountString;
-    res.json({ amount: totalLevs });
+    res.json({ amount: totalLevs }).send();
   } catch (error) {
     next(error);
   }

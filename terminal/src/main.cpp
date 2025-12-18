@@ -42,6 +42,11 @@ int main() {
         screen.ExitLoopClosure()();
     };
 
+    // Thread-safe UI update mechanism
+    auto post_task = [&](std::function<void()> task) {
+        screen.Post(task);
+    };
+
     // Main Application Loop
     while (true) {
         if (should_quit) break;
@@ -59,8 +64,8 @@ int main() {
                 
                 if (user) {
                     // Valid Session -> Go Main Layout
-                    // Pass all required dependencies: name, logout callback, relay, db, user
-                    component = tui::components::MainLayout(user->name, onLogout, relayService, dbService, *user);
+                    // Pass all required dependencies including post_task
+                    component = tui::components::MainLayout(user->name, onLogout, relayService, dbService, *user, post_task);
                 }
             }
             

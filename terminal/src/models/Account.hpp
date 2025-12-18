@@ -12,6 +12,7 @@ namespace models {
         std::string tokenSymbol = "LEV";
         std::string pdaPubKey;
         std::string ataPubKey;
+        std::string balance = "0.00"; // New field
     };
 
 }
