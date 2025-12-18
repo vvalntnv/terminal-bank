@@ -36,7 +36,7 @@ namespace tui::components {
                 // Pass dependencies to CreateBankAccountScreen
                 auto create_account = screens::CreateBankAccountScreen(relay, db, u);
                 
-                auto deposit_withdraw = screens::DepositWithdrawScreen();
+                auto deposit_withdraw = screens::DepositWithdrawScreen(relay, db, u);
                 auto internal_transfer = screens::InternalTransferScreen();
                 auto external_transfer = screens::ExternalTransferScreen();
 
