@@ -9,8 +9,8 @@ export async function initializeAccountController(
 ) {
   try {
     const data = req.body as InitializeAccountSchema;
-    const signature = await initializeAccountService(data);
-    res.json({ signature }).send();
+    const ataAddress = await initializeAccountService(data);
+    res.json({ address: ataAddress.toString() }).send();
   } catch (error) {
     next(error);
   }

@@ -6,8 +6,8 @@
 #include "../../models/User.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
-#include <iostream>
 #include <vector>
+#define FACTOR 1000000000
 
 using namespace ftxui;
 
@@ -74,11 +74,21 @@ namespace tui::screens {
                     return;
                 }
 
+#include <cmath>
+#include <iomanip>
+
+// ... existing code ...
+
                 uint64_t amount = 0;
                 try {
-                    amount = std::stoull(amount_str);
+                    // Allow for floating point input (e.g. 10.65)
+                    double amount_d = std::stod(amount_str);
+                    
+                    // Multiply by factor and round to ensure precision
+                    // 10.65 * 10^9 = 10,650,000,000
+                    amount = static_cast<uint64_t>(std::round(amount_d * FACTOR));
                 } catch (...) {
-                    status_text = "Error: Invalid amount format.";
+                    status_text = "Error: Invalid amount format. Use number like 10.65";
                     status_color = Color::Red;
                     return;
                 }
@@ -126,7 +136,7 @@ namespace tui::screens {
                         );
                     }
 
-                    status_text = "Success! Sig: " + result.substr(0, 16) + "...";
+                    status_text = "Success! Sig: " + result;
                     status_color = Color::Green;
                     amount_str.clear();
 

@@ -111,6 +111,9 @@ std::string RelayAPIClient::makeRequest(
             auto jsonResponse = nlohmann::json::parse(r.text);
             if (jsonResponse.contains("signature")) {
                 return jsonResponse["signature"].get<std::string>();
+            }  
+            if (jsonResponse.contains("address")) {
+                return jsonResponse["address"].get<std::string>();
             }
             return "Success";
         } catch (...) {

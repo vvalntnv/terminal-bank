@@ -19,7 +19,7 @@ namespace tui {
                     return vbox({
                         child_->Render() | flex,
                         separator(),
-                        text("Controls: Arrow Keys + Enter | n: Menu | Esc x2 or Ctrl+C to Quit") | dim | center
+                        text("Controls: Arrow Keys + Enter | F10: Menu | Esc x2 or Ctrl+C to Quit") | dim | center
                     });
                 }
 

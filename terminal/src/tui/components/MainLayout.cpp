@@ -66,7 +66,7 @@ namespace tui::components {
 
             bool OnEvent(Event event) override {
                 if (show_menu) {
-                    if (event == Event::Escape || event == Event::Character('n')) {
+                    if (event == Event::Escape || event == Event::F10) {
                         show_menu = false;
                         return true;
                     }
@@ -82,7 +82,7 @@ namespace tui::components {
                     return menu->OnEvent(event);
                 }
 
-                if (event == Event::Character('n')) {
+                if (event == Event::F10) {
                     show_menu = true;
                     return true;
                 }

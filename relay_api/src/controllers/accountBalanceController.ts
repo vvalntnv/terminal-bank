@@ -1,7 +1,11 @@
 import { createClient } from "@/client";
 import { AccountBalanceRequest, accountBalanceSchema } from "@/schemas/balance";
 import { getUserAccountPda, getUserAta } from "@/utils/userUtils";
-import { getAddressFromPublicKey } from "@solana/kit";
+import {
+  Address,
+  getAddressDecoder,
+  getAddressFromPublicKey,
+} from "@solana/kit";
 import { Request, Response, NextFunction } from "express";
 
 export async function accountBalanceController(
@@ -20,7 +24,8 @@ export async function accountBalanceController(
     );
 
     const ata = await getUserAta(pda);
-    const ataAddress = await getAddressFromPublicKey(ata);
+    const ataAddress = ata.toBase58() as Address;
+    // const ataAddress = await getAddressFromPublicKey(ata);
     const { value: accountData } = await client.rpc
       .getTokenAccountBalance(ataAddress)
       .send();

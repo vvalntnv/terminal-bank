@@ -1,14 +1,15 @@
 import { createClient } from "@/client/index.js";
 import { getInitializeInstructionAsync } from "@/instructionClient/index.js";
 import { getMintAddress } from "@/utils/mintUtils.js";
-import { getUserAccountPda } from "@/utils/userUtils.js";
+import { getUserAccountPda, getUserAta } from "@/utils/userUtils.js";
 import { InitializeAccountSchema } from "@/schemas/initializeAccount.js";
 import { sendTransaction } from "@/utils/transactionUtils.js";
+import { getAddressFromPublicKey } from "@solana/kit";
 
 export async function initializeAccountService(args: InitializeAccountSchema) {
   const client = createClient();
   const levMint = getMintAddress();
-  const [userAccountPda, _] = await getUserAccountPda(
+  const [userAccountPda] = await getUserAccountPda(
     client.wallet.address,
     args.userAccountId,
   );
@@ -21,5 +22,12 @@ export async function initializeAccountService(args: InitializeAccountSchema) {
     userAccountPda,
   });
 
-  return await sendTransaction(client, instruction);
+  await sendTransaction(client, instruction);
+
+  const [pda] = await getUserAccountPda(
+    client.wallet.address,
+    args.userAccountId,
+  );
+  const userAta = await getUserAta(pda);
+  return userAta.toString();
 }

@@ -18,6 +18,7 @@ export const errorHandler = (
 
   // Unexpected errors
   logger.error(`Unexpected Error: ${err.message}`, { stack: err.stack });
+  console.error(err);
   return res.status(500).json({
     status: "error",
     message: "Something went wrong",
