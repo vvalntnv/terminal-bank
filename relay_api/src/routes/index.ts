@@ -9,12 +9,20 @@ import { externalTransferSchema } from "@/schemas/externalTransfer.js";
 import { initializeAccountController } from "@/controllers/initializeAccountController.js";
 import { depositController } from "@/controllers/depositController.js";
 import { withdrawController } from "@/controllers/withdrawController.js";
-import { 
-  internalTransferController, 
-  externalTransferController 
+import {
+  internalTransferController,
+  externalTransferController,
 } from "@/controllers/transferController.js";
+import { airdropSchema } from "@/schemas/airdrop";
+import { airdropController } from "@/controllers/airdropController";
+import { accountBalanceSchema } from "@/schemas/balance";
+import { accountBalanceController } from "@/controllers/accountBalanceController";
 
 const router = Router();
+
+router.get("/account-balance/:accountId", accountBalanceController);
+
+router.post("/airdrop-sol", validate(airdropSchema), airdropController);
 
 router.post(
   "/initialize-account",
@@ -22,17 +30,9 @@ router.post(
   initializeAccountController,
 );
 
-router.post(
-  "/deposit",
-  validate(depositSchema),
-  depositController,
-);
+router.post("/deposit", validate(depositSchema), depositController);
 
-router.post(
-  "/withdraw",
-  validate(withdrawSchema),
-  withdrawController,
-);
+router.post("/withdraw", validate(withdrawSchema), withdrawController);
 
 router.post(
   "/transfer/internal",

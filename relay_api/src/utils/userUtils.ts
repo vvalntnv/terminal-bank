@@ -1,12 +1,12 @@
 import {
   getAddressEncoder,
   getProgramDerivedAddress,
-  getPublicKeyFromAddress,
   getU8Encoder,
   getUtf8Encoder,
   type Address,
   type ProgramDerivedAddress,
 } from "@solana/kit";
+import { PublicKey } from "@solana/web3.js";
 import { ONCHAIN_PROGRAM_ADDRESS } from "../instructionClient/programs/onchain";
 import { getMintAddress } from "./mintUtils";
 import { getAssociatedTokenAddress } from "@solana/spl-token";
@@ -41,8 +41,10 @@ export async function getUserAccountPda(
  */
 export async function getUserAta(userAccountPda: Address) {
   const levMint = getMintAddress();
-  const mintPubkey = await getPublicKeyFromAddress(levMint);
-  const userPdaPubkey = await getPublicKeyFromAddress(userAccountPda);
+
+  const mintPubkey = new PublicKey(levMint.toString());
+  const userPdaPubkey = new PublicKey(userAccountPda.toString());
+  console.log("are be", userPdaPubkey);
 
   return await getAssociatedTokenAddress(mintPubkey, userPdaPubkey, true);
 }
