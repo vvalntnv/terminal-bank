@@ -1,6 +1,15 @@
 #pragma once
 #include <ftxui/component/component.hpp>
+#include <memory>
+#include <string>
+#include "../../services/RelayService.hpp"
+#include "../../services/DatabaseService.hpp"
+#include "../../models/User.hpp"
 
 namespace tui::screens {
-    ftxui::Component CreateBankAccountScreen();
+    ftxui::Component CreateBankAccountScreen(
+        std::shared_ptr<services::RelayService> relayService,
+        std::shared_ptr<services::DatabaseService> dbService,
+        const models::User& user
+    );
 }

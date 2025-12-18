@@ -1,4 +1,5 @@
 #include "WelcomeScreen.hpp"
+#include "../../models/Account.hpp"
 #include "../../utils/Base58.hpp"
 #include "../../utils/ConfigManager.hpp"
 #include "../../utils/SolanaUtils.hpp"
@@ -51,7 +52,6 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
         // Construct path based on toggle
         std::string finalKeyPath;
         if (login_key_source_selected == 1) { // From Keys Dir
-          // No need to set login_input placeholder here as we switched component
           std::string keysDir = utils::ConfigManager::getKeysDirectory();
           std::string filename = key_path_login;
           if (filename.find(".json") == std::string::npos) {
@@ -82,21 +82,16 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
         onLogin_();
       });
 
-                    login_input_abs = Input(&key_path_login, "Absolute Path");
-                    login_input_file = Input(&key_path_login, "Filename (without extension)");
+      login_input_abs = Input(&key_path_login, "Absolute Path");
+      login_input_file = Input(&key_path_login, "Filename (without extension)");
 
-                    login_container = Container::Vertical({
-                        user_menu,
-                        login_key_source_toggle,
-                        Container::Tab({
-                            login_input_abs,
-                            login_input_file
-                        }, &login_key_source_selected),
-                        login_button
-                    });
+      login_container = Container::Vertical(
+          {user_menu, login_key_source_toggle,
+           Container::Tab({login_input_abs, login_input_file},
+                          &login_key_source_selected),
+           login_button});
 
-
-                    // --- Register Form Components ---
+      // --- Register Form Components ---
       reg_button = Button("Create Account", [this] {
         if (reg_name.empty() || reg_key_path.empty()) {
           status_text = "Please fill all fields.";
@@ -130,25 +125,53 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
           finalKeyPath = reg_key_path;
         }
 
-        auto pubKey =
-            utils::SolanaUtils::ReadPublicKeyFromKeypairFile(finalKeyPath);
-        if (!pubKey) {
+        auto keypair =
+            utils::SolanaUtils::ReadKeypairFromKeypairFile(finalKeyPath);
+        if (!keypair) {
           status_text = "Failed to read keypair.";
           return;
         }
+
+        // Extract Public Key (last 32 bytes)
+        std::vector<uint8_t> pubKeyBytes(keypair->begin() + 32, keypair->end());
+        std::string pubKeyStr = utils::EncodeBase58(pubKeyBytes);
+        std::string privKeyStr = utils::EncodeBase58(*keypair);
 
         models::User newUser;
         newUser.name = reg_name;
         newUser.age = std::stoi(reg_age.empty() ? "0" : reg_age);
         newUser.phoneNumber = reg_phone;
-        newUser.publicKey = utils::EncodeBase58(*pubKey);
-        newUser.walletAddress = newUser.publicKey; // For now same
+        newUser.publicKey = pubKeyStr;
+        newUser.walletAddress = pubKeyStr; // For now same
 
         try {
-          dbService_->createUser(newUser);
-          utils::ConfigManager::saveSession(finalKeyPath);
+          // 1. Create General Account On-Chain
+          // Seed Index = 1
+          // Name = "General"
+          try {
+            // airdropping some gooddies
+            relayService_->AirdropSol(10, pubKeyStr, privKeyStr);
 
-          onLogin_();
+            std::string pda = relayService_->CreateAccount(
+                1, "General", pubKeyStr, privKeyStr);
+
+            // 2. Persist User
+            dbService_->createUser(newUser);
+
+            // 3. Persist General Account
+            models::Account generalAccount;
+            generalAccount.seedIndex = 1;
+            generalAccount.accountName = "General";
+            generalAccount.pubKey = pubKeyStr;
+            generalAccount.pdaPubKey = pda;
+
+            dbService_->createAccount(generalAccount);
+
+            utils::ConfigManager::saveSession(finalKeyPath);
+            onLogin_();
+          } catch (const std::exception &e) {
+            status_text = "Relay Error: " + std::string(e.what());
+          }
 
         } catch (const std::exception &e) {
           status_text = "Error creating user: " + std::string(e.what());
@@ -162,22 +185,16 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
       reg_input_name = Input(&reg_name, "Name");
       reg_input_age = Input(&reg_age, "Age");
       reg_input_phone = Input(&reg_phone, "Phone");
-                    reg_input_abs = Input(&reg_key_path, "Absolute Path");
-                    reg_input_file = Input(&reg_key_path, "Filename (without extension)");
+      reg_input_abs = Input(&reg_key_path, "Absolute Path");
+      reg_input_file = Input(&reg_key_path, "Filename (without extension)");
 
-                    reg_container = Container::Vertical({
-                        reg_input_name,
-                        reg_input_age,
-                        reg_input_phone,
-                        key_source_toggle,
-                        Container::Tab({
-                            reg_input_abs,
-                            reg_input_file
-                        }, &key_source_selected),
-                        reg_button
-                    });
+      reg_container = Container::Vertical(
+          {reg_input_name, reg_input_age, reg_input_phone, key_source_toggle,
+           Container::Tab({reg_input_abs, reg_input_file},
+                          &key_source_selected),
+           reg_button});
 
-                    // Top Level Tab
+      // Top Level Tab
       tab_toggle = Toggle(&tab_values, &tab_selected);
 
       main_container = Container::Vertical(
@@ -207,7 +224,9 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
       return vbox({text("Select User:"), user_menu->Render() | border,
                    separator(), text("Key Source:"),
                    login_key_source_toggle->Render(), text(key_label),
-                   (is_login_from_dir ? login_input_file->Render() : login_input_abs->Render()) | border,
+                   (is_login_from_dir ? login_input_file->Render()
+                                      : login_input_abs->Render()) |
+                       border,
                    login_button->Render() | align_right});
     }
 
@@ -221,7 +240,9 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
                          reg_input_phone->Render() | border | flex}),
                    separator(), text("Wallet Setup"),
                    key_source_toggle->Render(), text(key_label),
-                   (is_generating_new ? reg_input_file->Render() : reg_input_abs->Render()) | border,
+                   (is_generating_new ? reg_input_file->Render()
+                                      : reg_input_abs->Render()) |
+                       border,
                    reg_button->Render() | align_right});
     }
 
@@ -244,7 +265,6 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
     bool is_login_from_dir = false;
 
     Component user_menu;
-    // Component login_input; // Removed
     Component login_input_abs;
     Component login_input_file;
     Component login_button;
@@ -262,7 +282,6 @@ Component WelcomeScreen(std::shared_ptr<services::DatabaseService> dbService,
     Component reg_input_name;
     Component reg_input_age;
     Component reg_input_phone;
-    // Component reg_input_key; // Removed
     Component reg_input_abs;
     Component reg_input_file;
     Component key_source_toggle;

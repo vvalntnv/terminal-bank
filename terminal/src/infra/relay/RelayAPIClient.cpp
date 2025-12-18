@@ -1,10 +1,23 @@
 #include "RelayAPIClient.hpp"
 #include <cpr/cpr.h>
+#include <cstdio>
 #include <iostream>
 
 namespace infra {
 
 RelayAPIClient::RelayAPIClient(const std::string& baseUrl) : baseUrl(baseUrl) {}
+
+std::string RelayAPIClient::AirdropSolana(
+    unsigned int amount,
+    const std::string& pubKey,
+    const std::string& privKey
+) {
+    nlohmann::json payload = {
+      {"amountToAirdrop", amount}
+    };
+
+    return makeRequest("/api/airdrop-sol", payload, pubKey, privKey);
+}
 
 std::string RelayAPIClient::InitializeAccount(
     int userAccountId,
@@ -118,6 +131,7 @@ std::string RelayAPIClient::makeRequest(
         } catch (...) {
             errorMessage = "HTTP Error " + std::to_string(r.status_code) + ": " + r.text;
         }
+        printf("Error message: %s", errorMessage.c_str());
         throw RelayException(errorMessage);
     }
 }

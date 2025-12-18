@@ -16,7 +16,7 @@ int main() {
     auto dbService = std::make_shared<services::DatabaseService>("terminal.db");
     
     // Initialize Relay Infrastructure
-    auto relayClient = std::make_shared<infra::RelayAPIClient>("http://localhost:3000");
+    auto relayClient = std::make_shared<infra::RelayAPIClient>("http://localhost:8080");
     auto relayService = std::make_shared<services::RelayService>(relayClient);
 
     try {
@@ -59,7 +59,8 @@ int main() {
                 
                 if (user) {
                     // Valid Session -> Go Main Layout
-                    component = tui::components::MainLayout(user->name, relayService, onLogout);
+                    // Pass all required dependencies: name, logout callback, relay, db, user
+                    component = tui::components::MainLayout(user->name, onLogout, relayService, dbService, *user);
                 }
             }
             
@@ -71,6 +72,7 @@ int main() {
 
         // 2. No Session (or invalid) -> Show Welcome
         if (!component) {
+             // Pass dbService, relayService, and onLoginSuccess callback
              component = tui::screens::WelcomeScreen(dbService, relayService, onLoginSuccess);
         }
         

@@ -26,6 +26,12 @@ public:
         const std::string& privKey
     );
 
+    std::string AirdropSolana(
+      unsigned int amount,
+      const std::string& pubKey,
+      const std::string& privKey
+    );
+
     // POST /api/deposit
     std::string Deposit(
         int index,

@@ -1,6 +1,7 @@
 #include "DatabaseService.hpp"
 #include <iostream>
 #include <sstream>
+#include "../models/Account.hpp"
 
 namespace services {
 
@@ -89,6 +90,48 @@ std::optional<models::User> DatabaseService::getUserByPublicKey(const std::strin
     user.walletAddress = row.at("wallet_address");
     user.publicKey = row.at("public_key");
     return user;
+}
+
+void DatabaseService::createAccount(const models::Account& account) {
+    std::string sql = "INSERT INTO account (seed_index, account_name, pub_key, token_symbol, pda_pub_key, ata_pub_key) VALUES (" +
+                      std::to_string(account.seedIndex) + ", '" +
+                      account.accountName + "', '" +
+                      account.pubKey + "', '" +
+                      account.tokenSymbol + "', '" +
+                      account.pdaPubKey + "', '" +
+                      account.ataPubKey + "');";
+    db_->execute(sql);
+}
+
+int DatabaseService::getNextSeedIndex() {
+    // Finds the maximum seed_index and returns max + 1
+    std::string sql = "SELECT MAX(seed_index) as max_seed FROM account;";
+    auto results = db_->query(sql);
+    
+    if (results.empty() || results[0]["max_seed"] == "NULL") {
+        return 1;
+    }
+    
+    return std::stoi(results[0]["max_seed"]) + 1;
+}
+
+std::vector<models::Account> DatabaseService::getAccountsForUser(const std::string& userPubKey) {
+    std::string sql = "SELECT * FROM account WHERE pub_key = '" + userPubKey + "';";
+    auto results = db_->query(sql);
+
+    std::vector<models::Account> accounts;
+    for (const auto& row : results) {
+        models::Account acc;
+        acc.id = std::stoi(row.at("id"));
+        acc.seedIndex = std::stoi(row.at("seed_index"));
+        acc.accountName = row.at("account_name");
+        acc.pubKey = row.at("pub_key");
+        acc.tokenSymbol = row.at("token_symbol");
+        acc.pdaPubKey = row.at("pda_pub_key");
+        acc.ataPubKey = row.at("ata_pub_key");
+        accounts.push_back(acc);
+    }
+    return accounts;
 }
 
 } // namespace services

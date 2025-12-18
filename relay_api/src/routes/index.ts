@@ -13,8 +13,16 @@ import {
   internalTransferController, 
   externalTransferController 
 } from "@/controllers/transferController.js";
+import { airdropSchema } from "@/schemas/airdrop";
+import { airdropController } from "@/controllers/airdropController";
 
 const router = Router();
+
+router.post(
+  "/airdrop-sol",
+  validate(airdropSchema),
+  airdropController 
+)
 
 router.post(
   "/initialize-account",
